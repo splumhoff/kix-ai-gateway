@@ -1,0 +1,45 @@
+name: Build and Push Docker image
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        run: |
+          echo "RELEASE_TAG=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+          echo "REPO_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_OUTPUT
+          echo "REPO_URL=https://github.com/${GITHUB_REPOSITORY}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            splumhoff/kix-ai-gateway:latest
+            splumhoff/kix-ai-gateway:${{ steps.meta.outputs.RELEASE_TAG }}
+          labels: |
+            org.opencontainers.image.title=KIX AI Gateway
+            org.opencontainers.image.description=Middleware for summarizing KIX tickets using Azure OpenAI
+            org.opencontainers.image.url=${{ steps.meta.outputs.REPO_URL }}
+            org.opencontainers.image.source=${{ steps.meta.outputs.REPO_URL }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.RELEASE_TAG }}
+            org.opencontainers.image.created=${{ github.event.release.published_at }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.licenses=MIT
