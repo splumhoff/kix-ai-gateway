@@ -1,0 +1,49 @@
+services:
+  nextcloud-db:
+    image: kix-aimiddleware
+    container_name: kix-aimiddleware
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    # Alternative: use env-file
+    # env_file:
+    #   - .env
+    environment:
+      # KIX
+      - KIX_API_URL: https://<kixURL>/api/v1
+      - KIX_SUMMARY_FIELD: myAISummary
+      # KIX API user credentials
+      # These credentials should be created in KIX with the necessary permissions to access the API.
+      - KIX_API_USER_NAME: <kixAPIUserName>
+      - KIX_API_USER_PASS: SECRETPASSWORD
+      # Azure OpenAI
+      - AZURE_OPENAI_ENDPOINT: https://<myDeploymentName>.openai.azure.com/
+      - AZURE_OPENAI_API_KEY: 
+      - AZURE_OPENAI_DEPLOYMENT_NAME: <myDeploymentName>
+      # The API version to use for Azure OpenAI.
+      # This should match the version supported by your Azure OpenAI deployment.
+      - AZURE_OPENAI_API_VERSION: 2025-01-01-preview
+      # The temperature controls the randomness of the AI model's responses.
+      # Lower values make the output more focused and deterministic, while higher values make it more random.
+      - AZURE_OPENAI_TEMPERATURE: 0.3
+      # the prompt is used to instruct the AI model on how to summarize the ticket in case no prompt is provided in the request
+      - AZURE_OPENAI_PROMPT: |
+          JSON input contains ticket header and articles.
+          Each article has a Body (message text) and SenderType (external or internal).
+          
+          Summarize in the following format. Use max 2 sentences per article (not per person).
+          Allow ckeditor formatting.
+          
+          Format:
+          Request:
+          Short summary of initial request.
+          
+          Current Status:
+          Brief status of the ticket.
+          
+          Communication History:
+          [Date] (external/internal): Summary
+          
+          Potential Solution Approaches:
+          Possible solutions or next steps.
+
